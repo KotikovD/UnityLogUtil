@@ -10,15 +10,15 @@ public static class LogUtil
         Color textColor = default,
         [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
     {
+        if (!Application.isEditor && editorOnly)
+            return;
+        
         if (caller == null)
         {
             Debug.unityLogger.Log(LogType.Error, $"<color=#{ColorUtility.ToHtmlStringRGB(Color.red)}>[LogUtil]",
                 $"Caller is null. <b>MemberName</b>: \"{memberName}\". LogString: \"{logString}\".</color>");
             return;
         }
-
-        if (!Application.isEditor && editorOnly)
-            return;
 
         Object context = caller switch
         {
