@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 public static class LogUtil
 {
@@ -10,26 +11,35 @@ public static class LogUtil
         Color textColor = default,
         [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
     {
-        if (!Application.isEditor && editorOnly)
+#if !UNITY_EDITOR
+         if (editorOnly)
             return;
-        
+#endif
+
         if (caller == null)
         {
-            Debug.unityLogger.Log(LogType.Error, $"<color=#{ColorUtility.ToHtmlStringRGB(Color.red)}>[LogUtil]",
+#if UNITY_EDITOR
+            Debug.unityLogger.Log(LogType.Error, $"<color=#{ColorUtility.ToHtmlStringRGB(Color.red)}>[{nameof(LogUtil)}] " +
                 $"Caller is null. <b>MemberName</b>: \"{memberName}\". LogString: \"{logString}\".</color>");
+#else
+            Debug.unityLogger.Log(LogType.Error, $"[{nameof(LogUtil)}] Caller is null. MemberName: \"{memberName}\". LogString: \"{logString}\".");
+#endif
             return;
         }
+
+#if UNITY_EDITOR
+        var color = ColorUtility.ToHtmlStringRGB(textColor == default ? Color.white : textColor);
+        logString = $"<color=#{color}>[{caller.GetType().Name}] <b>\"{memberName}\"</b>. {(string.IsNullOrEmpty(logString) ? string.Empty : logString)}</color>";
+#else
+        logString = $"[{caller.GetType().Name}] \"{memberName}\". {(string.IsNullOrEmpty(logString) ? string.Empty : logString)}";
+#endif
 
         Object context = caller switch
         {
             GameObject go => go,
             Component component => component.gameObject,
             _ => null
-        };
-
-        logString = string.IsNullOrEmpty(logString) ? string.Empty : logString;
-        var color = ColorUtility.ToHtmlStringRGB(textColor == default ? Color.white : textColor);
-        logString = $"<color=#{color}>[{caller.GetType().Name}] <b>\"{memberName}\"</b>. {logString}</color>";
+            };
 
         if (context)
             Debug.unityLogger.Log(logType, (object) logString, context);
